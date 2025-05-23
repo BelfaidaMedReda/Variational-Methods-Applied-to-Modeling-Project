@@ -1,0 +1,59 @@
+mesh Th = readmesh("unitcell.mesh");
+
+int Nk = 20;
+real pi = 3.141592653589793;
+real kmin = -pi, kmax = pi;
+real dk = (kmax - kmin) / (Nk - 1);
+
+// Espace vectoriel pour le problème
+fespace Vh(Th, [P1, P1]);
+Vh [u1, u2], [v1, v2];
+
+int nev = 6;
+// Espaces scalaires complexes pour stocker les composantes des vecteurs propres
+fespace Vh1(Th, P1);
+
+Vh1[int] eVec1;
+Vh1[int] eVec2;
+
+
+real[int] kxvals(Nk * Nk), kyvals(Nk * Nk);
+real[int,int] evals(Nk * Nk, nev);
+
+int compteur = 0;
+
+for (int i = 0; i < Nk; i++) {
+    for (int j = 0; j < Nk; j++) {
+        real kx = kmin + i * dk;
+        real ky = kmin + j * dk;
+        kxvals[compteur] = kx;
+        kyvals[compteur] = ky;
+
+        varf a([u1,u2],[v1,v2]) =
+            int2d(Th)(
+                0.5 * (dx(u1)*dx(v1) + dy(u1)*dy(v1) + dx(u2)*dx(v2) + dy(u2)*dy(v2))
+              + (0.5i) * (kx*dx(u1) + ky*dy(u1)) * conj(v1)
+              + (0.5i) * (kx*dx(u2) + ky*dy(u2)) * conj(v2)
+              - (0.5i) * u1 * (kx*dx(conj(v1)) + ky*dy(conj(v1)))
+              - (0.5i) * u2 * (kx*dx(conj(v2)) + ky*dy(conj(v2)))
+              + 0.5 * (kx*kx + ky*ky) * (u1*conj(v1) + u2*conj(v2))
+            );
+
+        varf m([u1,u2],[v1,v2]) =
+            int2d(Th)(u1*conj(v1) + u2*conj(v2));
+
+        matrix<complex> A = a(Vh, Vh, tgv = -1);
+        matrix<complex> M = m(Vh, Vh, tgv = -1);
+
+        real[int] ev(nev);
+
+        // Calcul des valeurs propres avec stockage des composantes séparées des vecteurs propres
+        int nconv = EigenValue(A, M, sym = false, sigma = 0, value = ev, vector = [eVec1,eVec2]);
+
+        for (int n = 0; n < nev; n++) {
+            evals(compteur, n) = ev[n];
+        }
+
+        compteur++;
+    }
+}

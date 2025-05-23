@@ -1,0 +1,32 @@
+real alpha = 5;
+int n = 20; // Nombre de subdivisions du maillage
+mesh Th = square(n, n);
+fespace Vh(Th, P1);
+Vh u, v;
+
+// Matrices
+varf a(u, v) = int2d(Th)(dx(u)*dx(v) + dy(u)*dy(v) + alpha*u*v);
+varf m(u, v) = int2d(Th)(u*v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A = a(Vh, Vh, tgv = -1);
+matrix M = m(Vh, Vh, tgv = -1);
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 5; // Nombre de valeurs propres à calculer
+real[int] ev(nev);      // Valeurs propres
+Vh[int] eVec(nev);      // Fonctions propres
+
+int k = EigenValue(A, M, sym = true, sigma = 0.0, value = ev, vector = eVec);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev[i] << endl;
+}
+
+// Affichage des fonctions propres
+for (int i = 0; i < nev; i++) {
+    plot(eVec[i], fill = true, value = true, wait = true, cmm = "Eigenfunction " + (i+1));
+}
+

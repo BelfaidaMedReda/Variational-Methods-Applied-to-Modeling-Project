@@ -1,0 +1,26 @@
+// Construction de la cellule unité du graphène (losange formé par a2 et a3)
+
+real acc = 1.0; // distance entre atomes (normalisée)
+real sqrt3 = sqrt(3.0);
+
+// Vecteurs du réseau direct
+real a2x = sqrt3/2, a2y = 3.0/2;
+real a3x = -sqrt3/2, a3y = 3.0/2;
+
+// Coins du losange
+real[int] X(4), Y(4);
+X[0] = -a2x/2 - a3x/2; Y[0] = -a2y/2 - a3y/2;
+X[1] =  a2x/2 - a3x/2; Y[1] =  a2y/2 - a3y/2;
+X[2] =  a2x/2 + a3x/2; Y[2] =  a2y/2 + a3y/2;
+X[3] = -a2x/2 + a3x/2; Y[3] = -a2y/2 + a3y/2;
+
+// Création des bords
+border b1(t=0,1){x=(1-t)*X[0] + t*X[1]; y=(1-t)*Y[0] + t*Y[1]; label=1;}
+border b2(t=0,1){x=(1-t)*X[1] + t*X[2]; y=(1-t)*Y[1] + t*Y[2]; label=2;}
+border b3(t=0,1){x=(1-t)*X[2] + t*X[3]; y=(1-t)*Y[2] + t*Y[3]; label=3;}
+border b4(t=0,1){x=(1-t)*X[3] + t*X[0]; y=(1-t)*Y[3] + t*Y[0]; label=4;}
+
+// Maillage
+mesh Th = buildmesh(b1(20) + b2(20) + b3(20) + b4(20));
+plot(Th, wait=1, cmm="Maille primitive U");
+savemesh(Th, "unitcell.mesh");

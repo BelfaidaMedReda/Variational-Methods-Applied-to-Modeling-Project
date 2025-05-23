@@ -1,0 +1,91 @@
+real L = 1;
+
+
+border alpha1(t=0, L){ x=t; y=0; label=1; } 
+border beta1(t=0, L){ x=L; y=t; label=2; }   
+border gamma1(t=0, L){ x=(1-t)*L; y=(1-t)*L; label=3; }  
+
+// Maillage avec 10 points par bord
+mesh T1 = buildmesh(beta1(10) + gamma1(10) + alpha1(10));
+
+border alpha2(t=0,L){ x=0; y=L - t; label=4; }         
+border beta2(t=0,L){ x=L - t; y=L; label=5; }          
+border gamma2(t=0,L){ x=t*L; y=t*L; label=6; }         
+
+mesh T2 = buildmesh(gamma2(10) + beta2(10) + alpha2(10));
+
+
+// Triangle T3
+
+border beta3(t=0,L){ x=-L; y = L + t;label=16;}
+border alpha3(t=0,L) { x= -L-t; y=2*L;label=17;}
+border gamma3(t=0,1){ x= -2*L*(1-t)-L*t; y = 2*L*(1-t) + t*L;label=18;}
+
+mesh T3 = buildmesh(beta3(10)+alpha3(10)+gamma3(10));
+
+
+
+// Triangle T4
+border alpha4(t=0, L){ x=0; y=2*L - t; label=13; }           
+border beta4(t=0, L){ x=t; y=L; label=14; }                
+border gamma4(t=0, 1){ x=(1 - t)*L; y=(1 - t)*L + t*2*L; label=15; } 
+
+mesh T4 = buildmesh( beta4(10) + gamma4(10) + alpha4(10) ); // ordre anti-horaire
+
+
+real dxT = -L;
+real dyT = +L;
+
+// Triangle T6 : translation de T1
+border alpha6(t=0, L){ x=t + dxT; y=0 + dyT; label=7; }
+border beta6(t=0, L){ x=L + dxT; y=t + dyT; label=8; }
+border gamma6(t=0, L){ x=(1-t)*L + dxT; y=(1-t)*L + dyT; label=9; }
+mesh T6 = buildmesh(beta6(10) + gamma6(10) + alpha6(10));
+
+// Triangle T5 : translation de T2
+border alpha5(t=0,L){ x=0 + dxT; y=L - t + dyT; label=10; }
+border beta5(t=0,L){ x=L - t + dxT; y=L + dyT; label=11; }
+border gamma5(t=0,L){ x=t*L + dxT; y=t*L + dyT; label=12; }
+mesh T5 = buildmesh(gamma5(10) + beta5(10) + alpha5(10));
+
+
+// Triangle T7 
+
+border beta7(t=0,L){x=-L;y=3*L-t;label=19;}
+border alpha7(t=0,L){x=-L+t;y=2*L;label=20;}
+border gamma7(t=0,1){x=-t*L;y=2*L*(1-t) + 3*t*L;label=21;}
+
+mesh T7 = buildmesh(beta7(10) + alpha7(10) +gamma7(10));
+
+
+// Fusion des 7 triangles
+mesh T = T1 + T2 + T6 + T5 + T4 + T3 + T7;
+
+
+fespace V(T, P1);
+V u, v;
+
+// Formes variationnelles : matrice de rigidité et masse
+varf a(u, v) = int2d(T)( dx(u)*dx(v) + dy(u)*dy(v) );
+varf m(u, v) = int2d(T)( u*v );
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A = a(V, V, tgv = -1);
+matrix M = m(V, V, tgv = -1);
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 10 ;   // Nombre de valeurs propres à calculer
+real[int] ev(nev);      // Valeurs propres
+V[int] eVec(nev);      // Fonctions propres
+
+int k = EigenValue(A, M, sym = true, sigma = 0.0, value = ev, vector = eVec);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev[i] << endl;
+}
+
+for (int i = 0; i < k; i++) {
+    plot(eVec[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}

@@ -1,0 +1,73 @@
+// Domaine 1 : rectangle horizontal
+mesh Th1 = square(30, 15, [2*x, y]);
+
+
+fespace V1(Th1, P1);
+V1 u1, v1;
+
+// Formes variationnelles : matrice de rigidité et masse
+varf a1(u1, v1) = int2d(Th1)( dx(u1)*dx(v1) + dy(u1)*dy(v1) );
+varf m1(u1, v1) = int2d(Th1)( u1*v1 );
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A1 = a1(V1, V1, tgv = -1);
+matrix M1 = m1(V1, V1, tgv = -1);
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 10 ;   // Nombre de valeurs propres à calculer
+real[int] ev1(nev);      // Valeurs propres
+V1[int] eVec1(nev);      // Fonctions propres
+
+int k = EigenValue(A1, M1, sym = true, sigma = 0.0, value = ev1, vector = eVec1);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th1 :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev1[i] << endl;
+}
+
+for (int i = 0; i < k; i++) {
+    plot(eVec1[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+
+mesh Th2 = square(15, 30, [x, 2*y]);
+
+
+fespace V2(Th2, P1);
+V2 u2, v2;
+
+// Formes variationnelles : matrice de rigidité et masse
+varf a2(u2, v2) = int2d(Th2)( dx(u2)*dx(v2) + dy(u2)*dy(v2) );
+varf m2(u2, v2) = int2d(Th2)( u2*v2 );
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A2 = a2(V2, V2, tgv = -1);
+matrix M2 = m2(V2, V2, tgv = -1);
+
+real[int] ev2(nev);      // Valeurs propres
+V2[int] eVec2(nev);      // Fonctions propres
+
+k = EigenValue(A2, M2, sym = true, sigma = 0.0, value = ev2, vector = eVec2);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th2 :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev2[i] << endl;
+}
+
+for (int i = 0; i < k; i++) {
+    plot(eVec2[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+cout << "Comparaison between Th1's eigenvalues and Th2's eigenvalues :" << endl;
+cout << "---------------------------------------------------------------" << endl;
+cout << "Th1's EV          | Th2's EV             | difference      " << endl;
+cout << "---------------------------------------------------------------" << endl;
+
+for (int i = 0; i < nev; ++i) {
+    cout << setw(17) << ev1[i]
+         << "| " << setw(25) << ev2[i]
+         << "| " << setw(12) << abs(ev1[i] - ev2[i]) << endl;
+}
+cout << "---------------------------------------------------------------" << endl;

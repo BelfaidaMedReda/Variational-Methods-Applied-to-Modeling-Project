@@ -1,0 +1,55 @@
+// Question 1.4 — Comparaison avec les fonctions propres analytiques du Laplacien
+
+verbosity = 1;
+int N = 20;
+mesh Th = square(N, N);
+
+// Espace P1
+fespace Vh(Th, P1);
+Vh u, v;
+
+// Assemblage des matrices
+varf a(u, v) = int2d(Th)(dx(u)*dx(v) + dy(u)*dy(v));
+varf m(u, v) = int2d(Th)(u*v);
+
+matrix A = a(Vh, Vh, tgv = -1);
+matrix M = m(Vh, Vh, tgv = -1);
+
+// Résolution du problème aux valeurs propres
+int nev = 5;
+real[int] ev(nev);
+Vh[int] eVec(nev);
+
+int k = EigenValue(A, M, sym = true, sigma = 0.1, value = ev, vector = eVec);
+
+// Fonctions propres analytiques
+func u00 = 0;
+func u01 = sin(pi*y);
+func u10 = sin(pi*x);
+func u11 = sin(pi*x)*sin(pi*y);
+func u21 = sin(2*pi*x)*sin(pi*y);
+func u12 = sin(pi*x)*sin(2*pi*y);
+
+// Approximation des fonctions propres analytiques
+Vh ue[nev];
+ue[0] = u10; // lambda_1,0 ~ pi^2
+ue[1] = u01; // lambda_0,1 ~ pi^2
+ue[2] = u11; // lambda_1,1 ~ 2*pi^2
+ue[3] = u21; // lambda_2,1 ~ 5*pi^2
+ue[4] = u12; // lambda_1,2 ~ 5*pi^2
+
+// Calcul des erreurs L2 et H1
+real[int] L2err(nev), H1err(nev);
+
+for (int i = 0; i < nev; i++) {
+    Vh diff = ue[i] - eVec[i];
+    real normL2 = sqrt(int2d(Th)(ue[i]^2));
+    real normH1 = sqrt(int2d(Th)(dx(ue[i])^2 + dy(ue[i])^2 + ue[i]^2));
+    real diffL2 = sqrt(int2d(Th)(diff^2));
+    real diffH1 = sqrt(int2d(Th)(dx(diff)^2 + dy(diff)^2 + diff^2));
+
+    L2err[i] = diffL2 / normL2 * 100; // erreur relative en %
+    H1err[i] = diffH1 / normH1 * 100;
+    cout << "Mode " << i+1 << ": Erreur L2 = " << L2err[i] << "%, Erreur H1 = " << H1err[i] << "%" << endl;
+}
+

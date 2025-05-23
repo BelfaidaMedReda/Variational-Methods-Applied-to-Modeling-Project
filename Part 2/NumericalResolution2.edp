@@ -1,0 +1,74 @@
+// ----------------------------
+// Paramètres
+// ----------------------------
+real T = 2.0;
+real dt = 0.01;
+int nT = T/dt;
+int nEigen = 500; // nombre de modes spectraux à utiliser
+
+// ----------------------------
+// Maillage et espace
+// ----------------------------
+int n = 50;
+mesh Th = square(n, n);
+fespace Vh(Th, P1);
+
+Vh u0 = sin(pi*x)*sin(pi*y);
+
+// ----------------------------
+// Problème aux valeurs propres
+// ----------------------------
+varf a(u, v) = int2d(Th)(dx(u)*dx(v) + dy(u)*dy(v));
+varf m(u, v) = int2d(Th)(u*v);
+
+matrix A = a(Vh, Vh, tgv = -1);   
+matrix M = m(Vh, Vh, tgv = -1);
+
+// Résolution du problème aux valeurs propres
+real[int] ev(nEigen);
+Vh[int] evec(nEigen);
+
+cout << "Solving eigenvalue problem..." << endl;
+int k = EigenValue(A, M, sym=true, sigma=0.0, value=ev, vector=evec);
+cout << "Found " << k << " eigenmodes." << endl;
+
+
+// Calcul des coefficients a_k par projection L2
+real[int] ak(nEigen);
+for (int i = 0; i < nEigen; i++) {
+    real nrm = int2d(Th)(evec[i]^2);
+    ak[i] = int2d(Th)(u0 * evec[i]) / nrm;
+    if (abs(ak[i]) < 1e-12){
+        ak[i] = 0;
+    } 
+
+}
+
+for (int i = 0; i < nEigen; i++) {
+    cout << "a[" << i << "] = " << ak[i] << endl;
+}
+
+plot(u0, cmm = "Initial condition u0", wait = true);
+
+Vh uspec;
+
+for (int it = 0; it <= nT; it++) {
+
+    real t = it * dt;   // temps actuel
+
+    uspec[] = 0;  // reset
+
+    for (int i = 0; i < nEigen; i++) {
+        real omega = sqrt(ev[i]);
+        real factor = ak[i] * cos(omega * t);
+
+        real[int] coef = evec[i][]; // extraire les coefficients du i-ème mode
+        for (int j = 0; j < uspec[].n; j++) {
+            uspec[][j] += factor * coef[j];
+        }
+    }
+
+    if (it % 20 == 0) {
+        plot(uspec, cmm = "Spectral solution at t = " + t, wait=1);
+    }
+}

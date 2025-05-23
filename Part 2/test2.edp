@@ -1,0 +1,92 @@
+real L = 1;
+
+// Building the D1 domain 
+
+// Triangle 4
+
+border alpha4(t=L,0){x=0;y=t;label=1;}
+border gamma4(t=0,L){x=t*L;y=t*L;label=2;}
+border beta4(t=0,L){x=L-t;y=L;label=3;}
+
+mesh T4 = buildmesh(alpha4(10)+gamma4(10)+beta4(10));
+
+
+// Triangle 1 & Triangle 2
+
+border alpha2(t=2*L,L){x=0;y=t;label=4;}
+border beta2(t=0,L){x=t;y=L;label=5;}
+border gamma2(t=0,1){x=(1-t)*L;y=(1-t)*L+2*t*L;label=6;}
+
+mesh T2 = buildmesh(alpha2(10)+beta2(10)+gamma2(10));
+
+
+border beta1(t=L,2*L){x=L;y=t;label=7;}
+border alpha1(t=L,0){x=t;y=2*L;label=8;}
+border gamma1(t=0,1){x=t*L;y=2*(1-t)*L+t*L;label=9;}
+
+mesh T1 = buildmesh(beta1(10)+alpha1(10)+gamma1(10));
+
+
+// Triangle 5 & Triangle 6
+
+border alpha6(t=L,2*L){x=0;y=t;label=10;}
+border gamma6(t=0,1){x=-t*L;y=2*(1-t)*L+t*L;label=11;}
+border beta6(t=0,L){x=-L+t;y=L;label=12;}
+
+mesh T6 = buildmesh(alpha6(10) + gamma6(10) + beta6(10));
+
+border alpha5(t=0,L){x=-t;y=2*L;label=13;}
+border beta5(t=0,L){x=-L;y=2*L-t;label=14;}
+border gamma5(t=0,1){x=-(1-t)*L;y=2*t*L+(1-t)*L;label=15;}
+
+mesh T5 = buildmesh(alpha5(10) + gamma5(10) + beta5(10));
+
+
+// Triangle 3 
+
+border beta3(t=L,2*L){x=-L;y=t;label=16;}
+border alpha3(t=L,2*L){x=-t;y=2*L;label=17;}
+border gamma3(t=0,1){x=-(1-t)*2*L-t*L;y=2*(1-t)*L+t*L;label=18;}
+
+mesh T3 = buildmesh(beta3(10) + alpha3(10) + gamma3(10));
+
+// Triangle 7
+
+border beta7(t=2*L,3*L){x=-L;y=t;label=19;}
+border gamma7(t=0,1){x=-(1-t)*L-2*t*L;y=3*L*(1-t)+2*t*L;label=20;}
+border alpha7(t=0,L){x=-2*L+t;y=2*L;label=21;}
+
+mesh T7 = buildmesh(beta7(10) + gamma7(10) + alpha7(10));
+
+
+mesh T = T4 + T2 + T1 + T6 + T5 +T3 + T7;
+
+
+
+fespace V(T, P1);
+V u, v;
+
+// Formes variationnelles : matrice de rigidité et masse
+varf a(u, v) = int2d(T)( dx(u)*dx(v) + dy(u)*dy(v) );
+varf m(u, v) = int2d(T)( u*v );
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A = a(V, V, tgv = -1);
+matrix M = m(V, V, tgv = -1);
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 10 ;   // Nombre de valeurs propres à calculer
+real[int] ev(nev);      // Valeurs propres
+V[int] eVec(nev);      // Fonctions propres
+
+int k = EigenValue(A, M, sym = true, sigma = 0.0, value = ev, vector = eVec);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev[i] << endl;
+}
+
+for (int i = 0; i < k; i++) {
+    plot(eVec[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}

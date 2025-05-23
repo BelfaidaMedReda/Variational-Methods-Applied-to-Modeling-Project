@@ -1,0 +1,162 @@
+// Paramètres du problème
+real rho0 = 1.0;  // Epaisseur maximale
+real alpha = 0.1;  // Paramètre pour la fonction quadratique radiale
+real R = 1.4;      // Rayon de la membrane
+
+// Définition des fonctions d'épaisseur
+
+// Exemple d'épaisseur quadratique radiale
+func example1 = (x^2 + y^2 < R^2) ? rho0 * (1 - alpha * sqrt(x^2 + y^2)) : 0.0;
+
+// Example d'épaisseur sinusoidale
+int k = 1; // contrôle la fréquence des variations spatiales
+func example2 = rho0 * ( 1 + sin(k*x)*sin(k*y));
+
+// Exemple  d'épaisseur exponentielle
+real beta = 0.25; //  contrôle la rapidité de la décroissance de l'épaisseur avec la distance au centre.
+func example3 =  rho0 * exp( -beta * (x^2 + y^2));
+
+// Exemple d'épaisseur gaussienne 
+real sig = 1;
+func example4 = rho0 * exp(-(x^2 + y^2)/sig); 
+
+
+// Définition du domaine
+mesh Th = square(20, 20, [x, y]);  // Domaine carré de 1x1
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V1(Th, P1);
+V1 rho1 = example1;
+
+// Formulation variationnelle
+varf a1(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m1(u, v) = int2d(Th)(rho1 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A1 = a1(V1, V1, tgv = -1);
+matrix M1 = m1(V1, V1, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 10 ;   // Nombre de valeurs propres à calculer
+real[int] ev1(nev);      // Valeurs propres
+V1[int] eVec1(nev);      // Fonctions propres
+
+int e1 = EigenValue(A1, M1, sym = true, sigma = 0.0, value = ev1, vector = eVec1);
+
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev1[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec1[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V2(Th, P1);
+V2 rho2 = example2;
+
+// Formulation variationnelle
+varf a2(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m2(u, v) = int2d(Th)(rho2 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A2 = a2(V2, V2, tgv = -1);
+matrix M2 = m2(V2, V2, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+real[int] ev2(nev);      // Valeurs propres
+V2[int] eVec2(nev);      // Fonctions propres
+
+int e2 = EigenValue(A2, M2, sym = true, sigma = 0.0, value = ev2, vector = eVec2);
+
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev2[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec2[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V3(Th, P1);
+V3 rho3 = example3;
+
+// Formulation variationnelle
+varf a3(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m3(u, v) = int2d(Th)(rho3 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A3 = a3(V3, V3, tgv = -1);
+matrix M3 = m3(V3, V3, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+real[int] ev3(nev);      // Valeurs propres
+V2[int] eVec3(nev);      // Fonctions propres
+
+int e3 = EigenValue(A3, M3, sym = true, sigma = 0.0, value = ev3, vector = eVec3);
+
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev3[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec3[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V4(Th, P1);
+V4 rho4 = example4;
+
+// Formulation variationnelle
+varf a4(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m4(u, v) = int2d(Th)(rho4 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A4 = a4(V4, V4, tgv = -1);
+matrix M4 = m4(V4, V4, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+real[int] ev4(nev);      // Valeurs propres
+V2[int] eVec4(nev);      // Fonctions propres
+
+int e4 = EigenValue(A4, M4, sym = true, sigma = 0.0, value = ev4, vector = eVec4);
+
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev4[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec4[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+
+cout << "Comparaison between Different thickness functions" << endl;
+cout << "--------------------------------------------------------------------------------------------------------------------" << endl;
+cout << "Radial Quadratic Decay          |  Sinusoidal Variation             |  Exponential Decay        |  Gaussian Profile " << endl;
+cout << "--------------------------------------------------------------------------------------------------------------------" << endl;
+
+for (int i = 0; i < nev; ++i) {
+    cout << setw(17) << ev1[i]
+         << "| " << setw(25) << ev2[i]
+         << "| " << setw(12) << ev3[i] 
+         << "| " << setw(12) << ev4[i] << endl;
+}
+cout << "---------------------------------------------------------------" << endl;

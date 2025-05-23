@@ -1,0 +1,64 @@
+// Méthode 1 de résolution numérique
+//
+// ----------------------------
+// 1. Paramètres
+// ----------------------------
+real T = 2.0;       // temps final
+real dt = 0.002;    // pas de temps (réduit pour stabilité)
+int nT = T/dt;      // nombre de pas de temps
+
+// ----------------------------
+// 2. Maillage et espace Vh
+// ----------------------------
+int n = 50;
+mesh Th = square(n, n);
+fespace Vh(Th, P1);
+Vh u, uold, unew, v, f = 0; // f est le second membre ici nul
+
+// ----------------------------
+// 3. Conditions initiales
+// ----------------------------
+u = sin(pi*x)*sin(pi*y); // onde initiale
+uold = u; // on suppose vitesse nulle initialement
+
+// Affiche l'état initial
+plot(u, cmm="Initial condition", wait=1);
+
+// ----------------------------
+// 4. Assemblage matrices
+// ----------------------------
+varf vmass(u1, u2) = int2d(Th)(u1 * u2);
+varf vrstiff(u1, u2) = int2d(Th)(dx(u1) * dx(u2) + dy(u1) * dy(u2));
+
+matrix M = vmass(Vh, Vh); // matrice de masse
+matrix A = vrstiff(Vh, Vh); // matrice de rigidité
+
+// ----------------------------
+// 5. Préparation solveur
+// ----------------------------
+set(M, solver=CG); // on va inverser M à chaque pas
+Vh rhs; // second membre pour chaque pas
+
+// ----------------------------
+// 6. Boucle en temps
+// ----------------------------
+for (int k = 0; k < nT; k++) {
+    real[int] tempVec = 2 * u[] - uold[];
+    real[int] rhsVec = M * tempVec;
+    real[int] Au = A * u[];
+    rhsVec -= dt^2 * Au;
+    rhs[] = rhsVec;
+
+    // Résolution du système : M * unew = rhs
+    unew[] = M^-1 * rhs[];
+
+    if (k % 20 == 0) {
+        plot(unew, cmm = "u at time t = " + (k*dt), wait = 1);
+    }
+
+    uold = u;
+    u = unew;
+}
+
+// Affiche la solution finale
+plot(u, cmm="Final solution at t = "+T, wait=1);

@@ -1,0 +1,76 @@
+mesh Th = square(20, 20, [x, y]);  // Domaine carré de 1x1
+
+func example1 = 1;
+func example2 = 0.5;
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V1(Th, P1);
+V1 rho1 = example1;
+
+// Formulation variationnelle
+varf a1(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m1(u, v) = int2d(Th)(rho1 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A1 = a1(V1, V1, tgv = -1);
+matrix M1 = m1(V1, V1, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+int nev = 10 ;   // Nombre de valeurs propres à calculer
+real[int] ev1(nev);      // Valeurs propres
+V1[int] eVec1(nev);      // Fonctions propres
+
+int e1 = EigenValue(A1, M1, sym = true, sigma = 0.0, value = ev1, vector = eVec1);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev1[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec1[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+// Définir la fonction d'épaisseur sur le domaine
+fespace V2(Th, P1);
+V2 rho2 = example2;
+
+// Formulation variationnelle
+varf a2(u, v) = int2d(Th)(dx(u) * dx(v) + dy(u) * dy(v));
+varf m2(u, v) = int2d(Th)(rho2 * u * v);
+
+// Assemblage avec conditions de Dirichlet homogènes (tgv = -1)
+matrix A2 = a2(V2, V2, tgv = -1);
+matrix M2 = m2(V2, V2, tgv = -1);
+
+
+// Problème aux valeurs propres généralisé A*u = lambda*M*u
+real[int] ev2(nev);      // Valeurs propres
+V2[int] eVec2(nev);      // Fonctions propres
+
+int e2 = EigenValue(A2, M2, sym = true, sigma = 0.0, value = ev2, vector = eVec2);
+
+// Affichage des valeurs propres
+cout << "Valeurs propres calculees pour le domaine Th :" << endl;
+for (int i = 0; i < nev; i++) {
+    cout << "lambda[" << i+1 << "] = " << ev2[i] << endl;
+}
+
+for (int i = 0; i < e1; i++) {
+    plot(eVec2[i], wait=true, fill=true, value=true, nbiso=20, cmm = "Fonction propre " + (i+1));
+}
+
+
+cout << "Comparaison between different values for rho0 :" << endl;
+cout << "---------------------------------------------------------------" << endl;
+cout << " rho0 = 1         | rho0 = 1/2             | difference      " << endl;
+cout << "---------------------------------------------------------------" << endl;
+
+for (int i = 0; i < nev; ++i) {
+    cout << setw(17) << ev1[i]
+         << "| " << setw(25) << ev2[i]
+         << "| " << setw(12) << abs(ev1[i] - ev2[i]) << endl;
+}
+cout << "---------------------------------------------------------------" << endl;
