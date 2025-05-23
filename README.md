@@ -30,23 +30,23 @@ The project is divided into three main parts:
 ## Mathematical Background
 ### 1. Laplacian Eigenvalue Problem
 The eigenvalue problem is defined as:
-\[
--\Delta u = \lambda u \quad \text{in } \Omega, \quad u = 0 \quad \text{on } \partial\Omega.
-\]
+
+$$-\Delta u = \lambda u \quad \text{in } \Omega, \quad u = 0 \quad \text{on } \partial\Omega.$$
+
 The analytical solutions are derived using separation of variables, yielding eigenvalues \(\lambda_{m,n} = \pi^2(m^2 + n^2)\) and eigenfunctions \(u_{m,n}(x,y) = \sin(m\pi x)\sin(n\pi y)\).
 
 ### 2. Vibrations of a Drumhead
 The wave equation for drumhead vibrations is:
-\[
-\frac{\partial^2 u}{\partial t^2} = c^2 \Delta u.
-\]
+
+$$\frac{\partial^2 u}{\partial t^2} = c^2 \Delta u.$$
+
 The problem is reduced to an eigenvalue problem for the Laplacian, and the effects of domain geometry and thickness variations are analyzed.
 
 ### 3. Graphene Energy Band Computation
 The Bloch Hamiltonian for graphene is:
-\[
+$$
 H_k u_k = \left(-\frac{1}{2}\Delta - ik \cdot \nabla + \frac{1}{2}|k|^2\right) u_k = E_k u_k.
-\]
+$$
 The variational formulation is implemented numerically using FreeFem++.
 
 ## Implementation
